@@ -1,0 +1,266 @@
+1. Explain the difference between a correlated subquery and a nested subquery.
+
+Answer: A correlated subquery references data from the outer query in its WHERE clause. A nested subquery can be placed anywhere in the outer query and doesn't directly reference the outer table.
+
+2. Write a query to find the top 5 customers with the highest total order amounts.
+
+Answer:
+
+SQL Code
+SELECT CustomerID, SUM(OrderAmount) AS TotalOrderAmount
+FROM Orders
+GROUP BY CustomerID
+ORDER BY TotalOrderAmount DESC
+LIMIT 5;
+
+3. Write a query to find the average salary for each department, excluding employees with salaries above a certain threshold.
+
+Answer:
+
+SQL Code
+SELECT Department, AVG(Salary) AS AverageSalary
+FROM (
+  SELECT Department, Salary
+  FROM Employees
+  WHERE Salary <= (SELECT MAX(Salary) FROM Employees) / 2
+) AS Subquery
+GROUP BY Department;
+
+4.Explain the difference between UNION and UNION ALL in SQL.
+
+Answer: UNION removes duplicate rows from the combined result set, while UNION ALL includes all rows, even duplicates, from the selected queries.
+
+5. Describe the functionality of triggers in SQL and their different types.
+
+Answer: Triggers are stored procedures that automatically execute in response to specific events on a table (like INSERT, UPDATE, DELETE). They can be used for data validation, enforcing business logic, or maintaining data consistency.
+
+6.Explain the difference between full outer joins and full joins in SQL.
+
+Answer: Both join types return all rows from both tables, but a full outer join preserves NULL values in unmatched columns, while a full join may replace them with default values depending on the database engine.
+
+
+7.Write a query to find the difference in days between the order date and the ship date for each order.
+
+Answer:
+
+SQL Code:
+SELECT OrderID, DATEDIFF(day, OrderDate, ShipDate) AS DaysDiff
+FROM Orders; 
+
+8.Write a query to find the manager for each employee in a company, even if the employee doesn't have a manager assigned.
+
+Answer:
+
+SQL Code:
+SELECT e.EmployeeID, m.ManagerName
+FROM Employees e
+LEFT JOIN Employees m ON e.ManagerID = m.EmployeeID;
+
+9. Write a query to pivot data from rows to columns, showing the total sales for each product category by month.
+
+Answer:
+
+SQL Code:
+SELECT Month,
+       SUM(CASE WHEN ProductCategory = 'Electronics' THEN Sales ELSE 0 END) AS Electronics,
+       SUM(CASE WHEN ProductCategory = 'Clothing' THEN Sales ELSE 0 END) AS Clothing,
+       ... (add more categories)
+FROM SalesData
+GROUP BY Month;
+
+10. Write a query to find employees who have never placed an order.
+
+Answer:
+
+SQL Code:
+SELECT e.EmployeeID, e.EmployeeName
+FROM Employees e
+LEFT JOIN Orders o ON e.EmployeeID = o.CustomerID
+WHERE o.CustomerID IS NULL
+
+11. Write a query to find the department with the highest average salary for employees who have been with the company for more than 2 years.
+
+Answer:
+
+SQL Code:
+SELECT d.DepartmentName, AVG(e.Salary) AS AverageSalary
+FROM Employees e
+INNER JOIN Departments d ON e.DepartmentID = d.DepartmentID
+WHERE e.HireDate < DATEADD(year, -2, GETDATE())
+GROUP BY d.DepartmentName
+ORDER BY AverageSalary DESC
+LIMIT 1;
+
+12. Write a query to find the nth highest salary in an employee table.
+
+Answer (using a subquery):
+
+SQL Code:
+SELECT Salary
+FROM Employees
+WHERE Salary IN (
+  SELECT TOP 1 Salary
+  FROM (
+    SELECT Salary, ROW_NUMBER() OVER (ORDER BY Salary DESC) AS RowNum
+    FROM Employees
+  ) AS Subquery
+  WHERE RowNum = n
+);
+
+13. Write a query to find the total number of customers who placed orders in each quarter of the last year.
+
+Answer:
+
+SQL Code:
+SELECT DATEPART(quarter, OrderDate) AS Quarter, COUNT(DISTINCT CustomerID) AS Customers
+FROM Orders
+WHERE OrderDate >= DATEADD(year, -1, GETDATE())
+GROUP BY DATEPART(quarter, OrderDate)
+ORDER BY Quarter;
+
+14. Write a query to find the manager hierarchy for a specific employee, showing all levels up to the CEO.
+
+Answer (using a recursive CTE)
+
+SQL Code:
+WITH ManagerHierarchy (EmployeeID, ManagerID, Level) AS (
+  SELECT EmployeeID, ManagerID, 1 AS Level
+  FROM Employees
+  WHERE EmployeeID = <employee_id>
+  UNION ALL
+  SELECT e.EmployeeID, m.ManagerID, h.Level + 1
+  FROM Employees e
+  INNER JOIN ManagerHierarchy h ON e.EmployeeID = h.ManagerID
+  INNER JOIN Employees m ON e.ManagerID = m.EmployeeID
+  WHERE m.ManagerID IS NOT NULL
+)
+SELECT EmployeeID, ManagerID, Level
+FROM ManagerHierarchy
+ORDER BY Level DESC;
+
+
+15. Write a query to find the product categories with the highest and lowest total sales for the previous year.
+
+Answer:
+
+SQL Code:
+SELECT ProductCategory, SUM(SalesAmount) AS TotalSales
+FROM SalesData
+WHERE SaleDate >= DATEADD(year, -1, GETDATE())
+GROUP BY ProductCategory
+ORDER BY TotalSales DESC, TotalSales ASC
+LIMIT 2;
+
+16. Write a query to find employees who earn more than the average salary in their department.
+
+Answer:
+
+SQL Code:
+SELECT e.EmployeeID, e.EmployeeName, d.DepartmentName, e.Salary
+FROM Employees e
+INNER JOIN Departments d ON e.DepartmentID = ____________________------
+
+
+17. 
+Tricky Interview Questions to confuse Candidates
+Designed to challenge the solver in you, these questions will assess your problem-solving skills. Use the table below for refrence and answer the questions accordingly.
+
+Data Setup: Use the sample tables for these questions.
+Customers Table:
+Customer ID	Name			  City
+1		John Levi		New York
+2		Jane Tye		Los Angeles
+3		Mike Foley		Chicago
+4		Alice White		New York
+ 
+
+Orders Table:
+Order ID	Customer ID	Order Date	Order Total
+100			1	2023-07-01	100.00
+101			2	2023-06-15	50.00
+102			3	2023-07-05	150.00
+103			1	2023-07-07	75.00
+104			4	2023-07-02	200.00
+ 
+
+Questions:
+
+1. Find the total number of orders placed by each customer, excluding orders placed in June.
+
+Tricky Aspect: Excluding a specific month required filtering based on the date.
+Answer:
+SQL Code:
+SELECT c.name, COUNT(*) AS num_orders
+FROM Customers c
+INNER JOIN Orders o ON c.customer_id = o.customer_id
+WHERE MONTH(order_date) <> 6
+GROUP BY c.name
+ 
+
+2. Find the customer who has placed the highest total order value.
+
+Tricky aspect: Required aggregation and sorting based on the total order value.
+Answer:
+SQL Code:
+SELECT c.name, SUM(order_total) AS total_order_value
+FROM Customers c
+INNER JOIN Orders o ON c.customer_id = o.customer_id
+GROUP BY c.name
+ORDER BY total_order_value DESC
+LIMIT 1;
+ 
+
+3. List all orders placed on specific dates (eg., 2023-07-04 and 2023-07-06) and their corresponding customer names.
+
+Tricky Aspect: Requires filtering based on multiple specific dates.
+Answer:
+SQL Code:
+SELECT c.name, o.order_date, o.order_total
+FROM Customers c
+INNER JOIN Orders o ON c.customer_id = o.customer_id
+WHERE order_date IN ('2023-07-04', '2023-07-06');
+ 
+
+4. Find the average order value for each city.
+
+Tricky Aspect: Requires joining tables and grouping by city.
+Answer:
+SQL Code:
+SELECT c.city, AVG(o.order_total) AS avg_order_value
+FROM Customers c
+INNER JOIN Orders o ON c.customer_id = o.customer_id
+GROUP BY c.city
+ 
+
+5. Identify customers who haven't placed any orders.
+
+Tricky Aspect: Requires using LEFT JOIN and filtering for null values.
+Answer:
+SQL Code:
+SELECT c.name
+FROM Customers c
+LEFT JOIN Orders o ON c.customer_id = o.customer_id
+WHERE o.order_id IS NULL;
+ 
+
+6. Find the month with the highest total order value.
+
+Tricky Aspect: Requires extracting the month from the date and grouping by month
+Answer:
+SQL Code:
+SELECT MONTH(order_date) AS order_month, SUM(order_total) AS total_order_value
+FROM Orders
+GROUP BY MONTH(order_date)
+ORDER BY total_order_value DESC
+LIMIT 1;
+ 
+
+7. Write a query to display the top 2 customers with the most orders in the last 30 days.
+
+Tricky Aspect: Requires filtering by date range and using window functions for ranking.
+Answer:
+SQL Code:
+SELECT c.name, COUNT(*) AS num_orders
+FROM Customers c
+INNER JOIN Orders o ON c.customer_id = o.customer_id
+WHERE order_date >= DATE_SUB (CURDATE)
